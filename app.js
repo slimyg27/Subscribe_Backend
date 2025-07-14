@@ -5,7 +5,7 @@ const app = express();
 import { PORT } from "./config/env.js";
 import authRouter from "./routes/auth.routes.js";
 import userRouter from "./routes/user.routes.js";
-import subscribeRouter from "./routes/subscription.routes.js";
+import subscribeRouter from "./routes/subscribe.routes.js";
 
 
 
