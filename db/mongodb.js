@@ -2,9 +2,12 @@ import mongoose from 'mongoose';
 
 import { DB_URI, DB_NAME, NODE_ENV } from '../config/env.js';
 
-if(!DB_URI){
-    throw new console.error('PLEASE DEFINE MONGODB URI IN THE ENVIRONMENT VARIABLE inside .env.<production/development>.local');
+if (!DB_URI) {
+    throw new Error(
+        '❌ PLEASE DEFINE MONGODB URI IN THE ENVIRONMENT VARIABLE (.env file)'
+    );
 }
+
     
 const connectDB = async() => {
     try {

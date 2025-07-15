@@ -9,7 +9,7 @@ const userSchema = new mongoose.Schema({
         minLength : 2,
         maxLength : 50
     },
-     emaile : {
+     email : {
         type : String,
         required : [true, 'User email is required'],
         trim : true,
@@ -21,7 +21,7 @@ const userSchema = new mongoose.Schema({
         type : String,
         required : [true, 'Password is required'],
         minLength : 6,
-        maxLength : 50,
+        maxLength : 1024,
     },
 
 
