@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subscription App Frontend</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for Inter font and some basic layout adjustments */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            padding: 32px;
+            width: 100%;
+            max-width: 500px;
+        }
+        .form-group {
+            margin-bottom: 16px;
+        }
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.2s;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+        .btn-primary {
+            background-color: #3b82f6;
+            color: #ffffff;
+        }
+        .btn-primary:hover {
+            background-color: #2563eb;
+            transform: translateY(-1px);
+        }
+        .btn-secondary {
+            background-color: #ef4444;
+            color: #ffffff;
+        }
+        .btn-secondary:hover {
+            background-color: #dc2626;
+            transform: translateY(-1px);
+        }
+        .message {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-weight: 500;
+        }
+        .message.success {
+            background-color: #d1fae5;
+            color: #065f46;
+            border: 1px solid #34d399;
+        }
+        .message.error {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #ef4444;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-8">Subscription App</h1>
+
+        <!-- Message Display Area -->
+        <div id="message-area" class="message hidden"></div>
+
+        <!-- Authentication Forms -->
+        <div id="auth-forms">
+            <div class="mb-8">
+                <h2 class="text-2xl font-semibold text-gray-700 mb-4 text-center">Sign Up</h2>
+                <form id="signup-form">
+                    <div class="form-group">
+                        <input type="text" id="signup-username" class="form-input" placeholder="Username" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="email" id="signup-email" class="form-input" placeholder="Email" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="password" id="signup-password" class="form-input" placeholder="Password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Sign Up</button>
+                </form>
+            </div>
+
+            <div>
+                <h2 class="text-2xl font-semibold text-gray-700 mb-4 text-center">Sign In</h2>
+                <form id="signin-form">
+                    <div class="form-group">
+                        <input type="email" id="signin-email" class="form-input" placeholder="Email" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="password" id="signin-password" class="form-input" placeholder="Password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Sign In</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Dashboard Area (Hidden by default) -->
+        <div id="dashboard" class="hidden">
+            <h2 class="text-2xl font-semibold text-gray-700 mb-4 text-center">Welcome to your Dashboard!</h2>
+            <p id="user-info" class="text-center text-gray-600 mb-6"></p>
+            
+            <div class="flex flex-col space-y-4">
+                <button id="fetch-profile-btn" class="btn btn-primary">Fetch My Profile</button>
+                <button id="fetch-subscriptions-btn" class="btn btn-primary">Fetch My Subscriptions</button>
+                <button id="logout-btn" class="btn btn-secondary">Logout</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Base URL for your backend API
+        const API_BASE_URL = 'http://localhost:8000/api/v1';
+
+        // Get DOM elements
+        const messageArea = document.getElementById('message-area');
+        const authForms = document.getElementById('auth-forms');
+        const dashboard = document.getElementById('dashboard');
+        const userInfo = document.getElementById('user-info');
+
+        const signupForm = document.getElementById('signup-form');
+        const signinForm = document.getElementById('signin-form');
+        const logoutBtn = document.getElementById('logout-btn');
+        const fetchProfileBtn = document.getElementById('fetch-profile-btn');
+        const fetchSubscriptionsBtn = document.getElementById('fetch-subscriptions-btn');
+
+        // Function to display messages
+        function displayMessage(message, type) {
+            messageArea.textContent = message;
+            messageArea.className = `message ${type}`;
+            messageArea.classList.remove('hidden');
+            setTimeout(() => {
+                messageArea.classList.add('hidden');
+            }, 5000); // Hide after 5 seconds
+        }
+
+        // Function to set/get/remove JWT token from localStorage
+        const TokenManager = {
+            setToken: (token) => {
+                localStorage.setItem('jwtToken', token);
+            },
+            getToken: () => {
+                return localStorage.getItem('jwtToken');
+            },
+            removeToken: () => {
+                localStorage.removeItem('jwtToken');
+            }
+        };
+
+        // Function to update UI based on login status
+        function updateUI() {
+            const token = TokenManager.getToken();
+            if (token) {
+                authForms.classList.add('hidden');
+                dashboard.classList.remove('hidden');
+                // You might decode the token here to get user info if needed,
+                // or fetch it from a protected /profile endpoint
+                userInfo.textContent = 'You are logged in!'; // Placeholder
+            } else {
+                authForms.classList.remove('hidden');
+                dashboard.classList.add('hidden');
+                userInfo.textContent = '';
+            }
+        }
+
+        // --- Event Listeners ---
+
+        // Signup Form Submission
+        signupForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('signup-username').value;
+            const email = document.getElementById('signup-email').value;
+            const password = document.getElementById('signup-password').value;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/auths/signup`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ name, email, password }),
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    displayMessage(data.message || 'Signup successful! Please sign in.', 'success');
+                    signupForm.reset(); // Clear form
+                } else {
+                    displayMessage(data.message || 'Signup failed.', 'error');
+                }
+            } catch (error) {
+                console.error('Error during signup:', error);
+                displayMessage('An error occurred during signup. Please try again.', 'error');
+            }
+        });
+
+        // Signin Form Submission
+        signinForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('signin-email').value;
+            const password = document.getElementById('signin-password').value;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/auths/signin`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email, password }),
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    TokenManager.setToken(data.data.token); // Assuming your backend sends 'token'
+                    displayMessage('Sign in successful!', 'success');
+                    signinForm.reset(); // Clear form
+                    updateUI(); // Update UI to show dashboard
+                } else {
+                    displayMessage(data.message || 'Sign in failed. Invalid credentials.', 'error');
+                }
+            } catch (error) {
+                console.error('Error during signin:', error);
+                displayMessage('An error occurred during signin. Please try again.', 'error');
+            }
+        });
+
+        // Logout Button
+        logoutBtn.addEventListener('click', () => {
+            TokenManager.removeToken();
+            displayMessage('Logged out successfully.', 'success');
+            updateUI(); // Update UI to show auth forms
+        });
+
+        // Fetch Profile Button (Example of a protected route)
+        fetchProfileBtn.addEventListener('click', async () => {
+            const token = TokenManager.getToken();
+            if (!token) {
+                displayMessage('You are not logged in.', 'error');
+                updateUI();
+                return;
+            }
+
+            try {
+                // Assuming you have a protected /api/v1/users/profile route
+                const response = await fetch(`${API_BASE_URL}/users/profile`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`, // Send JWT token
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    displayMessage(`Profile fetched: ${JSON.stringify(data.user)}`, 'success');
+                    // You might want to update userInfo.textContent with actual user data
+                } else {
+                    displayMessage(data.message || 'Failed to fetch profile.', 'error');
+                    if (response.status === 401) { // Token expired or invalid
+                        TokenManager.removeToken();
+                        updateUI();
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching profile:', error);
+                displayMessage('An error occurred while fetching profile.', 'error');
+            }
+        });
+
+        // Fetch Subscriptions Button (Example of a protected route)
+        fetchSubscriptionsBtn.addEventListener('click', async () => {
+            const token = TokenManager.getToken();
+            if (!token) {
+                displayMessage('You are not logged in.', 'error');
+                updateUI();
+                return;
+            }
+
+            try {
+                // This route will need to be implemented in your backend's subscribe.routes.js
+                // and subscription.controllers.js to fetch subscriptions for the logged-in user.
+                // Assuming it returns subscriptions for the authenticated user based on their token.
+                const response = await fetch(`${API_BASE_URL}/subscriptions`, { // Or /subscriptions/me if you implement it that way
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    displayMessage(`Subscriptions fetched: ${JSON.stringify(data.subscriptions)}`, 'success');
+                } else {
+                    displayMessage(data.message || 'Failed to fetch subscriptions.', 'error');
+                    if (response.status === 401) {
+                        TokenManager.removeToken();
+                        updateUI();
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching subscriptions:', error);
+                displayMessage('An error occurred while fetching subscriptions.', 'error');
+            }
+        });
+
+        // Initial UI update on page load
+        updateUI();
+    </script>
+</body>
+</html>

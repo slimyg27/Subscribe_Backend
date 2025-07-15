@@ -10,7 +10,6 @@ import User from "../models/user.models.js";
 
 
 export const signup = async (req, res, next) => {
-    console.log("helloooooooo");
     const session = await mongoose.startSession();
     session.startTransaction();
 
@@ -59,6 +58,40 @@ export const signup = async (req, res, next) => {
 
 
 export const signIn = async (req, res, next) => {
+
+    try {
+        const {email, password} = req.body;
+
+        const user = await User.findOne({email});
+        if(!user){
+            const error = new Error("User not found");
+            error.statusCode = 404;
+            throw error;
+        }
+
+        const isPasswordcorrect = await  bcrypt.compare(password, user.password);
+
+        if(!isPasswordcorrect){
+            const error = new Error("Invalid password");
+            error.statusCode = 401;
+            throw error;
+             }
+
+        const token = jwt.sign({userId : user._id}, JWT_SECRET, {expiresIn: JWT_EXPIRES_IN});
+
+
+        res.status(200).json({
+            success : true,
+            message : "User signed in",
+            data : {
+                token,
+                user,
+            }
+        })
+        
+    } catch (error) {
+        next(error);
+    }
 
 }
 

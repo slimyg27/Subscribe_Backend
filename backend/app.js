@@ -9,9 +9,15 @@ import subscribeRouter from "./routes/subscribe.routes.js";
 import connectDB from "./db/mongodb.js";
 import errorMiddleware from "./middlewares/error.middleware.js";
 import cookieParser from "cookie-parser";
+import cors from "cors";
 
 
-
+app.use(cors({
+    origin: '*', 
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'], 
+    allowedHeaders: ['Content-Type', 'Authorization'], 
+    credentials: true 
+}));
 app.use(express.json());
 
 app.use(urlencoded({extended : false}));
