@@ -10,6 +10,7 @@ import connectDB from "./db/mongodb.js";
 import errorMiddleware from "./middlewares/error.middleware.js";
 import cookieParser from "cookie-parser";
 import cors from "cors";
+import arcjetMiddleware from "./middlewares/arcjet.middleware.js";
 
 
 app.use(cors({
@@ -22,6 +23,8 @@ app.use(express.json());
 
 app.use(urlencoded({extended : false}));
 app.use(cookieParser());
+app.use(arcjetMiddleware);
+
 
 // DEFINING ROUTES
 
