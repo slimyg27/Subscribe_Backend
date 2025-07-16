@@ -23,13 +23,6 @@ export const getSingleuser = async (req, res, next) => {
 
     try {
         
-        const userID = req.params.id;
-        const loggedin = req.user._id.toString();
-
-        if(userID != loggedin){
-            return res.status(401).json({message: "You're trying to access other user's info, PROHIBITTED"})
-        }
-
         const user = await User.findById(req.params.id).select('-password');
 
         if(!user){
