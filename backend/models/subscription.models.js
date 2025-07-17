@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import User from "./user.models.js";
 
 
 const subscriptionSchema =  new mongoose.Schema({
@@ -11,7 +12,7 @@ const subscriptionSchema =  new mongoose.Schema({
         maxLength : 100,
 
     },
-     prince : {
+     price : {
         type : Number,
         required : [true, 'Subscription prince is required'],
         min : [0, 'Subscription price is required']
@@ -80,7 +81,7 @@ const subscriptionSchema =  new mongoose.Schema({
 }, {timestamps : true})
 
 
-subscriptionSchema.pre('save', (next) => {
+subscriptionSchema.pre('save', function(next) {   
     if(!this.renewalDate){
         const renewalPeriods = {
             DAILY : 1,
