@@ -17,7 +17,8 @@ export const getallSubscription = async (req, res) => {
     }
 }
 
-export const getUserSubscription = async (req, res) => {
+export const getUserSubscription = async (req, res
+) => {
     try {
         const userId = req.params.id;
 
