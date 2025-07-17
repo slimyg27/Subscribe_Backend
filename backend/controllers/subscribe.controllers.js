@@ -17,12 +17,39 @@ export const getallSubscription = async (req, res) => {
     }
 }
 
-export const getUserSubscription = async (req, res
-) => {
+export const updateSubscription = async (req, res,next) => {
+    try {
+        
+        const subscriptionId = req.params.subId;
+        const updates = req.body;
+        const allowedUpdates = ['name', 'frequency','category','paymentMethod' ];
+
+        const savedUpdates = {};
+
+        for(let key in updates){
+            if(allowedUpdates.includes(key)){
+                savedUpdates[key] = updates[key];
+            }
+        }
+
+        const updatedSubscription = await Subscription.findByIdAndUpdate(subscriptionId,{$set : savedUpdates}, {new : true , runValidators : true});
+       return res.status(200).json({success : true, message : "Subscription updated Successfully", data : updatedSubscription});
+
+
+    } catch (error) {
+        next(error);
+    }
+}
+
+
+
+
+
+export const getUserSubscription = async (req, res,next) => {
     try {
         const userId = req.params.id;
 
-        const subscriptionList = await Subscription.find(userId);
+        const subscriptionList = await Subscription.find({user : userId});
         if(!subscriptionList){
             const error = new Error('No subscription found, Please subscribe');
             error.status = 404;
@@ -32,7 +59,7 @@ export const getUserSubscription = async (req, res
         res.status(200).json({
             success : true,
             message : 'Fetched user subscription',
-            subscriptionList,
+            data : subscriptionList,
         })
 
 
