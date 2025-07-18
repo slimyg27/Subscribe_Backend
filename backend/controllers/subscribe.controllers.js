@@ -42,6 +42,29 @@ export const updateSubscription = async (req, res,next) => {
 }
 
 
+export const getSubscriptionDetail = async (req, res,next) => {
+    try {
+        const subId = req.params.subId;
+
+        const subscriptiondetail = await Subscription.findById(subId);
+        if(!subscriptiondetail){
+            const error = new Error('No subscription found, Please subscribe');
+            error.status = 404;
+            throw error;
+        }
+
+        res.status(200).json({
+            success : true,
+            message : 'Fetched user subscription',
+            data : subscriptionList,
+        })
+
+
+    } catch (error) {
+        next(error);
+    }
+};
+
 
 
 
@@ -104,6 +127,30 @@ export const createSubscription = async (req, res, next)=>{
         session.endSession();
         next(error);
         
+    }
+}
+
+
+export const deleteSubscription = async (req, res, next) => {
+    const subId = req.params.subId;
+
+    try {
+       const deletedsubscription = await Subscription.findByIdAndDelete(subId);
+       if(!deletedsubscription){
+        return res.status(404).json({
+            success : false,
+            message : "Subscription not found"
+        });
+    };
+
+        return res.status(200).json({
+            success : true,
+            message : "Subscription deleted Successfully"
+        });
+
+       
+    } catch (error) {
+        next(error);
     }
 }
 
