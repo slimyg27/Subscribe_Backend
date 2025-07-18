@@ -154,6 +154,27 @@ export const deleteSubscription = async (req, res, next) => {
     }
 }
 
+export const cancelSubscription = async (req,res,next) => {
+
+    const userId = req.user._id;
+    try {
+         
+        const cancelled = await Subscription.updateMany({user : userId}, {$set : {status : "CANCELLED"}}, {runValidators : true});
+
+        if(!cancelled){
+            return res.status(401).json({
+                success : false,
+                message : "Couldnt do it"
+            })
+        }
+
+        return res.status(200).json({success : true, message : "CANCELLED user subscription"});
+        
+    } catch (error) {
+        next(error);
+    }
+}
+
 
 
 
